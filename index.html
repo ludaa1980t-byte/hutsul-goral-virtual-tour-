@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Житло гуцулів і гуралів: віртуальна екскурсія</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+<style>
+  :root{--bg:#f6f1e8;--ink:#2b2118;--muted:#6f6152;--wood:#8a5a2b;--red:#a3271f;--green:#2e5e3a;--card:#fffaf2;--line:#e2d6c3}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+  .ornament{height:10px;background:repeating-linear-gradient(45deg,var(--red) 0 6px,transparent 6px 12px),repeating-linear-gradient(-45deg,var(--green) 0 6px,transparent 6px 12px);opacity:.75;border-radius:3px;margin-bottom:22px}
+  h1,h2{font-family:Lora,Georgia,serif;line-height:1.2;margin:0 0 10px}
+  h1{font-size:clamp(28px,5vw,40px)}
+  h2{font-size:26px;margin-top:40px}
+  .lead{color:var(--muted);font-size:18px;max-width:740px;margin:0}
+  nav.tabs{position:sticky;top:0;z-index:5;display:flex;gap:6px;flex-wrap:wrap;background:var(--bg);padding:12px 0;margin:18px 0 6px;border-bottom:1px solid var(--line)}
+  nav.tabs a{text-decoration:none;color:var(--ink);font-weight:600;padding:9px 16px;border-radius:999px;background:#eadfcd}
+  nav.tabs a.on{background:var(--wood);color:#fff}
+  section[data-view]{display:none}
+  section[data-view].on{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:18px}
+  .mv{width:100%;height:min(70vh,560px);background:radial-gradient(circle at 50% 40%,#fff 0,#efe5d6 75%);touch-action:pan-y}
+  .mv canvas{display:block;width:100%!important;height:100%!important}
+  .loading{padding:8px 14px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+  .seg{display:inline-flex;background:#eadfcd;border-radius:999px;padding:4px}
+  .seg button{border:0;background:transparent;font:600 15px Inter,sans-serif;color:var(--ink);padding:9px 16px;border-radius:999px;cursor:pointer}
+  .seg button.on{background:var(--wood);color:#fff}
+  .hint{color:var(--muted);font-size:14px;margin-left:auto}
+  .caption{padding:0 14px 14px;color:var(--muted);font-size:15px;margin:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tile b{display:block;font-family:Lora,serif;font-size:18px;margin-bottom:4px;color:var(--wood)}
+  .photo{position:relative}
+  .photo img{display:block;width:100%;height:auto}
+  .pin{position:absolute;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;border:2px solid #fff;background:var(--red);color:#fff;font:700 15px Inter,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .pin.on{background:var(--green);transform:translate(-50%,-50%) scale(1.15)}
+  .legend{list-style:none;margin:0;padding:6px 14px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 18px}
+  .legend li{padding:8px 10px;border-radius:8px;cursor:pointer}
+  .legend li.on{background:#efe5d6}
+  .legend .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:13px;margin-right:8px}
+  .legend b{font-weight:600}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .pair figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .pair img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;background:#fff}
+  .pair figcaption{padding:10px 14px;font-weight:600}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:18px;font-size:15px}
+  th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
+  thead th{background:#eadfcd;font-family:Lora,serif;font-size:17px}
+  tbody th{font-weight:600;color:var(--wood);width:22%}
+  tr:last-child th,tr:last-child td{border-bottom:0}
+  .conclusion{background:var(--card);border-left:4px solid var(--green);border-radius:8px;padding:14px 18px;margin-top:18px}
+  @media(max-width:640px){.pair{grid-template-columns:1fr}table{font-size:14px}th,td{padding:9px 10px}}
+  footer{margin-top:44px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="ornament"></div>
+  <h1>Житло гуцулів і гуралів: віртуальна екскурсія</h1>
+  <p class="lead">Дві гірські традиції по різні боки Карпат. Українська гуцульська ґражда і польська гуральська хата з Підгалля в 3D, усередині та в порівнянні.</p>
+
+  <nav class="tabs">
+    <a href="#grazhda" data-tab="grazhda">Гуцульська ґражда</a>
+    <a href="#goral" data-tab="goral">Гуральська хата</a>
+    <a href="#compare" data-tab="compare">Порівняння</a>
+  </nav>
+
+  <!-- ҐРАЖДА -->
+  <section data-view="grazhda">
+    <h2>Ґражда в 3D</h2>
+    <p class="lead">Ґражда — традиційна садиба гуцулів у Карпатах. Житло, хлів і комори стоять квадратом і з'єднані спільним дахом, а всередині ховається закритий двір.</p>
+    <div class="card viewer" data-models="outside,inside"
+      data-cap0="Вигляд зовні: суцільні стіни з колод, високі дахи з дерев'яного ґонту і одні ворота. Ззовні ґражда схожа на маленьку фортецю."
+      data-cap1="Вигляд без даху: видно, як садиба поділена на житлову хату, приміщення для худоби й комори навколо внутрішнього двору.">
+      <div class="mv"></div>
+      <div class="loading">Завантаження 3D-моделі…</div>
+      <div class="bar">
+        <div class="seg"><button class="on">Зовні</button><button>Зазирнути всередину</button></div>
+        <span class="hint">Тягніть мишкою, щоб обертати, коліщатко — наблизити</span>
+      </div>
+      <p class="caption"></p>
+    </div>
+
+    <h2>Як влаштована ґражда</h2>
+    <div class="grid">
+      <div class="tile"><b>Замкнений двір</b>Будівлі стоять квадратом і утворюють закритий двір. Він захищав людей і худобу від вітру, снігу та диких звірів.</div>
+      <div class="tile"><b>Усе під одним дахом</b>Хата, хлів, стайня і комори з'єднані, тож узимку господар міг доглядати худобу, не виходячи в негоду.</div>
+      <div class="tile"><b>Одні ворота</b>У двір вели одні міцні ворота. Їх на ніч зачиняли, і садиба ставала неприступною.</div>
+      <div class="tile"><b>Дерево і ґонт</b>Стіни складали з тесаних смерекових колод, а дахи вкривали ґонтом — тонкими дерев'яними дощечками.</div>
+    </div>
+
+    <h2>Усередині гуцульської хати</h2>
+    <p class="lead">Натисніть на номер на фото, щоб дізнатися, що це за річ.</p>
+    <div class="card hotspots" data-img="room.jpg" data-alt="Інтер'єр гуцульської хати" data-items='[
+      {"x":14,"y":45,"t":"Піч","d":"серце хати: на ній варили їжу, пекли хліб, а в мороз на ній спали."},
+      {"x":21,"y":80,"t":"Лави","d":"широкі лави вздовж стін. Удень на них сиділи й працювали, вночі спали."},
+      {"x":50,"y":22,"t":"Мисник","d":"полиця для мальованих полумисків і горщиків, окраса хати."},
+      {"x":73,"y":21,"t":"Ікони з рушниками","d":"святий кут. Образи прикрашали вишитими рушниками."},
+      {"x":56,"y":56,"t":"Стіл","d":"стояв ближче до святого кута, за ним збиралася вся родина."},
+      {"x":92,"y":66,"t":"Скриня","d":"різьблена скриня для одягу, вишиванок і посагу."}]'></div>
+  </section>
+
+  <!-- ГУРАЛЬСЬКА ХАТА -->
+  <section data-view="goral">
+    <h2>Гуральська хата в 3D</h2>
+    <p class="lead">Гуралі — горяни Підгалля біля польських Татр. Їхня хата — окремий зруб із дуже високим крутим дахом, що стоїть на відкритому подвір'ї за низьким парканом.</p>
+    <div class="card viewer" data-models="goral_out,goral_in"
+      data-cap0="Вигляд зовні: світлі смерекові колоди на кам'яному фундаменті, дуже високий крутий дах із ґонту, різьблений фронтон і комин. Двір відкритий, лише низький паркан."
+      data-cap1="Вигляд без даху: біля входу — сіни, далі світла «біла ізба» з піччю з комином, столом, лавами, ліжком і скринею.">
+      <div class="mv"></div>
+      <div class="loading">Завантаження 3D-моделі…</div>
+      <div class="bar">
+        <div class="seg"><button class="on">Зовні</button><button>Зазирнути всередину</button></div>
+        <span class="hint">Тягніть мишкою, щоб обертати, коліщатко — наблизити</span>
+      </div>
+      <p class="caption"></p>
+    </div>
+
+    <h2>Як влаштована гуральська хата</h2>
+    <div class="grid">
+      <div class="tile"><b>Високий крутий дах</b>Дах дуже стрімкий, щоб у горах на ньому не залежувався важкий сніг. Його вкривали ґонтом.</div>
+      <div class="tile"><b>Відкритий двір</b>Хата стоїть окремо, а подвір'я огороджене лише низьким дерев'яним парканом. Господарські будівлі — окремо.</div>
+      <div class="tile"><b>Сіни посередині</b>Вхід веде в сіни, з яких двері відкриваються в житлові кімнати — ізби.</div>
+      <div class="tile"><b>Чорна і біла ізба</b>У «чорній» ізбі топили курною піччю без комина, і стіни чорніли від диму. «Біла» — чиста світлиця з піччю з комином, для свят і гостей.</div>
+    </div>
+
+    <h2>Усередині: біла ізба</h2>
+    <p class="lead">Натисніть на номер на фото, щоб дізнатися, що це за річ.</p>
+    <div class="card hotspots" data-img="goral_room.jpg" data-alt="Інтер'єр гуральської білої ізби" data-items='[
+      {"x":12,"y":42,"t":"Піч із комином","d":"дим виходить через комин, тому стіни в білій ізбі залишаються світлими й чистими."},
+      {"x":40,"y":15,"t":"Полиця з тарілками","d":"мальовані тарілки виставляли напоказ як окрасу кімнати."},
+      {"x":26,"y":30,"t":"Образи на склі","d":"ікони, намальовані на склі, — характерна прикраса гуральських хат."},
+      {"x":59,"y":62,"t":"Стіл і лави","d":"великий стіл, за яким приймали гостей і святкували."},
+      {"x":83,"y":45,"t":"Ліжко","d":"різьблене ліжко з високою купою вишитих подушок — гордість господині."},
+      {"x":91,"y":64,"t":"Скриня","d":"скриня для святкового одягу і посагу."}]'></div>
+  </section>
+
+  <!-- ПОРІВНЯННЯ -->
+  <section data-view="compare">
+    <h2>Порівняння</h2>
+    <div class="pair">
+      <figure><img src="room.jpg" alt="Гуцульська хата всередині"><figcaption>Гуцульська хата всередині</figcaption></figure>
+      <figure><img src="goral_room.jpg" alt="Гуральська біла ізба всередині"><figcaption>Гуральська біла ізба всередині</figcaption></figure>
+    </div>
+    <table>
+      <thead><tr><th></th><th>Гуцульська ґражда</th><th>Гуральська хата</th></tr></thead>
+      <tbody>
+        <tr><th>Де</th><td>Українські Карпати (Гуцульщина)</td><td>Польські Татри (Підгалля)</td></tr>
+        <tr><th>Тип садиби</th><td>Замкнений квадрат будівель із внутрішнім двором</td><td>Окрема хата на відкритому подвір'ї з низьким парканом</td></tr>
+        <tr><th>Худоба</th><td>Під одним дахом із житлом, у тій самій садибі</td><td>В окремих господарських будівлях</td></tr>
+        <tr><th>Дах</th><td>Кілька з'єднаних дахів довкола двору</td><td>Один дуже високий і крутий двосхилий дах</td></tr>
+        <tr><th>Захист</th><td>Сама садиба — як фортеця з одними воротами</td><td>Захищає товстий зруб, двір відкритий</td></tr>
+        <tr><th>Головна кімната</th><td>Хата з піччю, лавами, мисником і святим кутом</td><td>Біла ізба з піччю з комином, ліжком і образами на склі</td></tr>
+        <tr><th>Спільне</th><td colspan="2">Зруб із смерекових колод, дахи з ґонту, піч у центрі побуту, лави вздовж стін, скриня, мальований посуд та ікони як прикраса.</td></tr>
+      </tbody>
+    </table>
+    <div class="conclusion"><b>Висновок.</b> Обидва народи жили в схожих суворих горах і будували з того самого дерева. Але гуцули захищалися, збираючи все господарство в одну замкнену фортецю-ґражду. Гуралі натомість ставили окрему високу хату з крутим дахом і відкритим подвір'ям.</div>
+  </section>
+
+  <footer>Шкільний проєкт «Застосування інформаційних технологій у порівняльному дослідженні житла гуцулів і гуралів». Зображення створені в ChatGPT і Gemini, 3D-моделі — у Tripo AI.</footer>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+const PARTS={outside:3,inside:3,goral_out:3,goral_in:3};
+const bufs={};const loader=new GLTFLoader();
+function loadScript(src){return new Promise((ok,err)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=err;document.head.appendChild(s);});}
+async function getBuf(name){
+  if(bufs[name])return bufs[name];
+  return bufs[name]=(async()=>{
+    const jobs=[];for(let k=0;k<PARTS[name];k++)jobs.push(loadScript(name+k+'.js'));
+    await Promise.all(jobs);
+    const bin=atob(GLB[name].join(''));GLB[name]=null;
+    const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+    return arr.buffer;
+  })();
+}
+
+class Viewer{
+  constructor(card){
+    this.card=card;this.box=card.querySelector('.mv');this.loadEl=card.querySelector('.loading');
+    this.capEl=card.querySelector('.caption');this.names=card.dataset.models.split(',');
+    this.caps=[card.dataset.cap0,card.dataset.cap1];this.models={};this.current=null;this.want=null;this.started=false;
+    this.btns=[...card.querySelectorAll('.seg button')];
+    this.btns.forEach((b,i)=>b.addEventListener('click',()=>this.show(i)));
+  }
+  init(){
+    if(this.started)return;this.started=true;
+    const r=this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+    r.setPixelRatio(Math.min(devicePixelRatio,2));r.outputColorSpace=THREE.SRGBColorSpace;
+    r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.15;this.box.appendChild(r.domElement);
+    const sc=this.scene=new THREE.Scene();
+    sc.add(new THREE.HemisphereLight(0xfff6e8,0x6b5a45,1.6));
+    const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(3,5,4);sc.add(sun);
+    const fill=new THREE.DirectionalLight(0xffe9cc,0.8);fill.position.set(-4,2,-3);sc.add(fill);
+    this.camera=new THREE.PerspectiveCamera(35,1,0.01,100);
+    const c=this.controls=new OrbitControls(this.camera,r.domElement);
+    c.enableDamping=true;c.autoRotate=true;c.autoRotateSpeed=0.8;
+    c.addEventListener('start',()=>{c.autoRotate=false;});
+    new ResizeObserver(()=>this.resize()).observe(this.box);this.resize();
+    r.setAnimationLoop(()=>{if(this.card.offsetParent){c.update();r.render(sc,this.camera);}});
+    this.show(0);
+  }
+  resize(){const w=this.box.clientWidth,h=this.box.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}
+  frame(obj){
+    const b=new THREE.Box3().setFromObject(obj),ctr=b.getCenter(new THREE.Vector3()),sz=b.getSize(new THREE.Vector3());
+    obj.position.sub(ctr);const rad=sz.length()/2,cam=this.camera;
+    const d=rad/Math.sin(THREE.MathUtils.degToRad(cam.fov/2))*0.95;
+    cam.position.set(d*0.6,d*0.55,d*0.6);cam.near=d/100;cam.far=d*10;cam.updateProjectionMatrix();
+    const c=this.controls;c.target.set(0,0,0);c.minDistance=rad*0.4;c.maxDistance=d*2;c.autoRotate=true;c.update();
+  }
+  async show(i){
+    this.btns.forEach((b,k)=>b.classList.toggle('on',k===i));this.capEl.textContent=this.caps[i];
+    const name=this.names[i];this.want=name;
+    const put=o=>{if(this.current)this.scene.remove(this.current);this.current=o;this.scene.add(o);this.frame(o);this.loadEl.style.display='none';};
+    if(this.models[name])return put(this.models[name]);
+    this.loadEl.style.display='block';this.loadEl.textContent='Завантаження 3D-моделі…';
+    try{
+      const buf=await getBuf(name);
+      const g=await new Promise((ok,err)=>loader.parse(buf,'',ok,err));
+      if(!this.models[name]){const b=new THREE.Box3().setFromObject(g.scene);g.scene.position.sub(b.getCenter(new THREE.Vector3()));this.models[name]=g.scene;}
+      if(this.want===name)put(this.models[name]);
+    }catch(e){console.error(e);this.loadEl.textContent='Не вдалося завантажити модель. Оновіть сторінку.';}
+  }
+}
+const viewers={};
+document.querySelectorAll('section[data-view]').forEach(s=>{const v=s.querySelector('.viewer');if(v)viewers[s.dataset.view]=new Viewer(v);});
+
+document.querySelectorAll('.hotspots').forEach(card=>{
+  const items=JSON.parse(card.dataset.items);
+  const photo=document.createElement('div');photo.className='photo';
+  const img=document.createElement('img');img.src=card.dataset.img;img.alt=card.dataset.alt;photo.appendChild(img);
+  const legend=document.createElement('ul');legend.className='legend';
+  card.append(photo,legend);
+  const select=i=>{photo.querySelectorAll('.pin').forEach((p,k)=>p.classList.toggle('on',k===i));legend.querySelectorAll('li').forEach((l,k)=>l.classList.toggle('on',k===i));};
+  items.forEach((it,i)=>{
+    const p=document.createElement('button');p.className='pin';p.textContent=i+1;p.style.left=it.x+'%';p.style.top=it.y+'%';p.title=it.t;p.onclick=()=>select(i);photo.appendChild(p);
+    const li=document.createElement('li');li.innerHTML=`<span class="n">${i+1}</span><b>${it.t}</b> — ${it.d}`;li.onclick=()=>select(i);legend.appendChild(li);
+  });
+});
+
+const VIEWS=['grazhda','goral','compare'];
+function route(){
+  const h=location.hash.slice(1),v=VIEWS.includes(h)?h:'grazhda';
+  document.querySelectorAll('section[data-view]').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
+  document.querySelectorAll('nav.tabs a').forEach(a=>a.classList.toggle('on',a.dataset.tab===v));
+  if(viewers[v]){viewers[v].init();requestAnimationFrame(()=>viewers[v].resize());}
+}
+addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>
